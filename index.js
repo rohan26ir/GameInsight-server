@@ -101,7 +101,19 @@ app.delete('/deleteReview/:id', async (req, res) => {
   }
 });
 
-
+// Get review by ID (ExploreDetails)
+app.get('/review/:id', async (req, res) => {
+  const reviewId = req.params.id;
+  try {
+    const review = await reviewCollection.findOne({ _id: new ObjectId(reviewId) });
+    if (!review) {
+      return res.status(404).json({ message: 'Review not found' });
+    }
+    res.json(review);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch review', error });
+  }
+});
 
 
 
