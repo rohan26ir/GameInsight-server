@@ -55,6 +55,51 @@ async function run() {
         res.send(result);
     });
 
+    // My Reviews
+    app.get('/myReviews', async (req, res) => {
+      const userEmail = req.query.email;
+  
+      if (!userEmail) {
+          return res.status(400).json({ message: 'Email is required' });
+      }
+  
+      try {
+          const userReviews = await reviewCollection.find({ userEmail }).toArray();
+          res.status(200).json(userReviews);
+      } catch (error) {
+          res.status(500).json({ message: 'Failed to fetch reviews', error });
+      }
+  });
+
+  // Update Review
+  const { ObjectId } = require('mongodb');
+
+app.put('/updateReview/:id', async (req, res) => {
+    const id = req.params.id;
+    const updatedReview = req.body;
+
+    try {
+        const result = await reviewCollection.updateOne(
+            { _id: new ObjectId(id) },
+            { $set: updatedReview }
+        );
+        res.status(200).json(result);
+    } catch (error) {
+        res.status(500).json({ message: 'Failed to update review', error });
+    }
+});
+
+// Delete Review
+app.delete('/deleteReview/:id', async (req, res) => {
+  const id = req.params.id;
+
+  try {
+      const result = await reviewCollection.deleteOne({ _id: new ObjectId(id) });
+      res.status(200).json(result);
+  } catch (error) {
+      res.status(500).json({ message: 'Failed to delete review', error });
+  }
+});
 
 
 
