@@ -59,11 +59,9 @@ async function run() {
         const result = await cursor.toArray();
         res.send(result);
       } catch (error) {
-        res.status(500).json({ messeage: error });
+        res.json({ messeage: error });
       }
     });
-
-
 
 
     app.post('/addReview', async (req, res) => {
@@ -79,14 +77,14 @@ async function run() {
       const userEmail = req.query.email;
 
       if (!userEmail) {
-        return res.status(400).json({ message: 'Email is required' });
+        return res.json({ message: 'Email is required' });
       }
 
       try {
         const userReviews = await reviewCollection.find({ userEmail }).toArray();
-        res.status(200).json(userReviews);
+        res.json(userReviews);
       } catch (error) {
-        res.status(500).json({ message: 'Failed to fetch reviews', error });
+        res.json({ message: 'Failed to fetch reviews', error });
       }
     });
 
@@ -102,9 +100,9 @@ async function run() {
           { _id: new ObjectId(id) },
           { $set: updatedReview }
         );
-        res.status(200).json(result);
+        res.json(result);
       } catch (error) {
-        res.status(500).json({ message: 'Failed to update review', error });
+        res.json({ message: 'Failed to update review', error });
       }
     });
 
@@ -114,9 +112,9 @@ async function run() {
 
       try {
         const result = await reviewCollection.deleteOne({ _id: new ObjectId(id) });
-        res.status(200).json(result);
+        res.json(result);
       } catch (error) {
-        res.status(500).json({ message: 'Failed to delete review', error });
+        res.json({ message: 'Failed to delete review', error });
       }
     });
 
@@ -126,14 +124,25 @@ async function run() {
       try {
         const review = await reviewCollection.findOne({ _id: new ObjectId(reviewId) });
         if (!review) {
-          return res.status(404).json({ message: 'Review not found' });
+          return res.json({ message: 'Review not found' });
         }
         res.json(review);
       } catch (error) {
-        res.status(500).json({ message: 'Failed to fetch review', error });
+        res.json({ message: 'Failed to fetch review', error });
       }
     });
 
+
+    // Highest Rated Games
+    app.get('/highestRated', async (req, res) => {
+      try {
+        const cursor = reviewCollection.find( ).sort({ rating: -1}).limit( 6 );
+        const result = await  cursor.toArray();
+        res.send(result);
+      } catch (error) {
+        res.json({ message: 'Failed to fetch highest rated games', error });
+      }
+    });
 
 
 
