@@ -30,101 +30,117 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-      // Connect the client to the server	(optional starting in v4.7)
-      await client.connect();
-      // Send a ping to confirm a successful connection
-      await client.db("admin").command({ ping: 1 });
-      console.log("Pinged your deployment. You successfully connected to MongoDB!");
+    // Connect the client to the server	(optional starting in v4.7)
+    await client.connect();
+    // Send a ping to confirm a successful connection
+    await client.db("admin").command({ ping: 1 });
+    console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
-      const database = client.db('gameDB');
-      const reviewCollection = database.collection('game');
-
-
-      app.get('/addReview', async (req, res) => {
-          const cursor = reviewCollection.find();
-          const result = await cursor.toArray();
-          res.send(result);
-      });
+    const database = client.db('gameDB');
+    const reviewCollection = database.collection('game');
 
 
-      app.post('/addReview', async (req, res) => {
-        const newReview = req.body;
-        console.log('Adding new review', newReview)
+    // All Review and Sort
+    app.get('/addReview', async (req, res) => {
+      const { sortBy, order } = req.query;
+      let sortCriteria = {};
 
-        const result = await reviewCollection.insertOne(newReview);
+      if (sortBy) {
+        const orderValue = order === 'desc' ? -1 : 1;
+        if (sortBy === 'rating') {
+          sortCriteria = { rating: orderValue };
+        } else if (sortBy === 'year') {
+          sortCriteria = { year: orderValue };
+        }
+      }
+
+      try {
+        const cursor = reviewCollection.find().sort(sortCriteria);
+        const result = await cursor.toArray();
         res.send(result);
+      } catch (error) {
+        res.status(500).json({ messeage: error });
+      }
+    });
+
+
+
+
+    app.post('/addReview', async (req, res) => {
+      const newReview = req.body;
+      console.log('Adding new review', newReview)
+
+      const result = await reviewCollection.insertOne(newReview);
+      res.send(result);
     });
 
     // My Reviews
     app.get('/myReviews', async (req, res) => {
       const userEmail = req.query.email;
-  
+
       if (!userEmail) {
-          return res.status(400).json({ message: 'Email is required' });
+        return res.status(400).json({ message: 'Email is required' });
       }
-  
+
       try {
-          const userReviews = await reviewCollection.find({ userEmail }).toArray();
-          res.status(200).json(userReviews);
+        const userReviews = await reviewCollection.find({ userEmail }).toArray();
+        res.status(200).json(userReviews);
       } catch (error) {
-          res.status(500).json({ message: 'Failed to fetch reviews', error });
+        res.status(500).json({ message: 'Failed to fetch reviews', error });
       }
-  });
+    });
 
-  // Update Review
-  const { ObjectId } = require('mongodb');
+    // Update Review
+    const { ObjectId } = require('mongodb');
 
-app.put('/updateReview/:id', async (req, res) => {
-    const id = req.params.id;
-    const updatedReview = req.body;
+    app.put('/updateReview/:id', async (req, res) => {
+      const id = req.params.id;
+      const updatedReview = req.body;
 
-    try {
+      try {
         const result = await reviewCollection.updateOne(
-            { _id: new ObjectId(id) },
-            { $set: updatedReview }
+          { _id: new ObjectId(id) },
+          { $set: updatedReview }
         );
         res.status(200).json(result);
-    } catch (error) {
+      } catch (error) {
         res.status(500).json({ message: 'Failed to update review', error });
-    }
-});
+      }
+    });
 
-// Delete Review
-app.delete('/deleteReview/:id', async (req, res) => {
-  const id = req.params.id;
+    // Delete Review
+    app.delete('/deleteReview/:id', async (req, res) => {
+      const id = req.params.id;
 
-  try {
-      const result = await reviewCollection.deleteOne({ _id: new ObjectId(id) });
-      res.status(200).json(result);
-  } catch (error) {
-      res.status(500).json({ message: 'Failed to delete review', error });
-  }
-});
+      try {
+        const result = await reviewCollection.deleteOne({ _id: new ObjectId(id) });
+        res.status(200).json(result);
+      } catch (error) {
+        res.status(500).json({ message: 'Failed to delete review', error });
+      }
+    });
 
-// Get review by ID (ExploreDetails)
-app.get('/review/:id', async (req, res) => {
-  const reviewId = req.params.id;
-  try {
-    const review = await reviewCollection.findOne({ _id: new ObjectId(reviewId) });
-    if (!review) {
-      return res.status(404).json({ message: 'Review not found' });
-    }
-    res.json(review);
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch review', error });
-  }
-});
+    // ExploreDetails
+    app.get('/review/:id', async (req, res) => {
+      const reviewId = req.params.id;
+      try {
+        const review = await reviewCollection.findOne({ _id: new ObjectId(reviewId) });
+        if (!review) {
+          return res.status(404).json({ message: 'Review not found' });
+        }
+        res.json(review);
+      } catch (error) {
+        res.status(500).json({ message: 'Failed to fetch review', error });
+      }
+    });
 
-
-
-  
 
 
 
 
 
   } finally {
-      //   await client.close();
+    //   await client.close();
   }
 }
 run().catch(console.dir);
