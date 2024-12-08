@@ -38,6 +38,7 @@ async function run() {
 
     const database = client.db('gameDB');
     const reviewCollection = database.collection('game');
+    const watchlistCollection = database.collection('watchlist');
 
 
     // All Review and Sort
@@ -124,11 +125,11 @@ async function run() {
       try {
         const review = await reviewCollection.findOne({ _id: new ObjectId(reviewId) });
         if (!review) {
-          return res.json({ message: 'Review not found' });
+          return res.json();
         }
         res.json(review);
       } catch (error) {
-        res.json({ message: 'Failed to fetch review', error });
+        res.json();
       }
     });
 
@@ -136,13 +137,55 @@ async function run() {
     // Highest Rated Games
     app.get('/highestRated', async (req, res) => {
       try {
-        const cursor = reviewCollection.find( ).sort({ rating: -1}).limit( 6 );
-        const result = await  cursor.toArray();
+        const cursor = reviewCollection.find().sort({ rating: -1 }).limit(6);
+        const result = await cursor.toArray();
         res.send(result);
       } catch (error) {
-        res.json({ message: 'Failed to fetch highest rated games', error });
+        res.json();
       }
     });
+
+    // Add WatchList
+    app.post('/addToWatchList', async (req, res) => {
+      const watchItem = req.body;
+      if (!watchItem.userEmail || !watchItem.reviewId) {
+        return res.json();
+      }
+
+      try {
+        const existingItem = await watchlistCollection.findOne({
+          reviewId: watchItem.reviewId,
+          userEmail: watchItem.userEmail,
+        });
+
+        if (existingItem) {
+          return res.json({ message: 'Item already in watchlist' });
+        }
+
+        const result = await watchlistCollection.insertOne(watchItem);
+        res.json(result);
+      } catch (error) {
+        res.json();
+      }
+    });
+
+    // Get Watch list by Email
+app.get('/watchlist', async (req, res) => {
+  const { email } = req.query;
+  if (!email) {
+    return res.json();
+  }
+
+  try {
+    const watchlist = await watchlistCollection.find({ userEmail: email }).toArray();
+    res.json(watchlist);
+  } catch (error) {
+    res.json();
+  }
+});
+
+    
+
 
 
 
