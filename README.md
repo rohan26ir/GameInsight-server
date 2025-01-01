@@ -37,3 +37,6 @@ This repository contains the **backend** code for GameInsight, a game review pla
 
 - **Hosting**:
   - **Vercel**
+
+# Clint side: 
+ https://github.com/rohan26ir/GameInsight
